@@ -31,7 +31,7 @@ func Store(datasource *Datasource) http.HandlerFunc {
 			}
 
 		case http.MethodPut:
-			fmt.Println("request: ", request.Body)
+			//fmt.Println("request: ", request.Body)
 
 			InfoLogger.Println("Processing PUT request")
 			RequestLogger.Println(NewRequestLogEntry(request))
@@ -45,32 +45,19 @@ func Store(datasource *Datasource) http.HandlerFunc {
 				}
 			}
 
-			key := strings.TrimPrefix(request.URL.Path, "/store/")
+			key := strings.TrimPrefix(request.URL.Path, "/datastore/")
 
 			bytes, err := ioutil.ReadAll(request.Body)
 			//bytes, err := io.ReadAll(request.Body)
 			defer request.Body.Close()
-			var newValue string
+			newValue := string(bytes)
+			fmt.Println("request body received: ", newValue)
 			if err != nil || len(bytes) == 0 {
-				fmt.Println("err: ", err)
-				fmt.Println("len(bytes): ", len(bytes))
-				newValue = "testValueForNow"
+				newValue = "These Aren't the Values you're looking for"
+				fmt.Println("request body empty, setting value =", newValue)
 			} else {
-				fmt.Printf("\nbytes: %s", bytes)
-				newValue = string(bytes)
+				fmt.Println("request body found, setting value =", newValue)
 			}
-			//value := http.MaxBytesReader(responseWriter, request.Body, 1048576)
-
-			//valueBytes := make([]byte, 256)
-			//size, err := request.Body.Read(valueBytes)
-			//if err != nil || size == 0 {
-			//	fmt.Println("err: ", err)
-			//	fmt.Println("size: ", size)
-			//} else {
-			//	valueBytes = append([]byte(nil), valueBytes[:size]...)
-			//	fmt.Printf("\nbytes: %s", size)
-			//	fmt.Println(valueBytes)
-			//}
 
 			putErr := datasource.Put(Key(key), NewData(request.Header.Get("authorization"), newValue))
 			if putErr != nil {
