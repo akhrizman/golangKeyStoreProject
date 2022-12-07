@@ -111,14 +111,14 @@ func (ds *Datasource) CreateKvStore() error {
 
 func (ds *Datasource) Put(key Key, newData Data) error {
 	if ds.isClosed() {
-		ErrorLogger.Printf("Cannot insert [%s] because key value store is nil", key)
+		ErrorLogger.Printf("Cannot insert %s because key value store is nil", key)
 		return ErrKvStoreDoesNotExist
 	}
 	ds.Lock()
 	defer ds.Unlock()
 	existingData, ok := ds.kvStore[key]
 	if ok && !Authorized(&existingData, newData.owner) {
-		ErrorLogger.Printf("Cannot update [%s] because owners do not match", key)
+		ErrorLogger.Printf("Cannot update %s because owners do not match", key)
 		return ErrValueUpdateForbidden
 	} else {
 		ds.kvStore[key] = newData
@@ -128,7 +128,7 @@ func (ds *Datasource) Put(key Key, newData Data) error {
 
 func (ds *Datasource) Contains(key Key) (bool, error) {
 	if ds.isClosed() {
-		ErrorLogger.Printf("Cannot check if [%s] exists because key value store is nil", key)
+		ErrorLogger.Printf("Cannot check if %s exists because key value store is nil", key)
 		return false, ErrKvStoreDoesNotExist
 	}
 	ds.RLock()
@@ -139,14 +139,14 @@ func (ds *Datasource) Contains(key Key) (bool, error) {
 
 func (ds *Datasource) Get(key Key) (*Data, error) {
 	if ds.isClosed() {
-		ErrorLogger.Printf("Cannot get [%s] because key value store is nil", key)
+		ErrorLogger.Printf("Cannot get %s because key value store is nil", key)
 		return nil, ErrKvStoreDoesNotExist
 	}
 	ds.RLock()
 	defer ds.RUnlock()
 	existingData, ok := ds.kvStore[key]
 	if !ok {
-		ErrorLogger.Printf("Cannot get [%s] because it does not exist", key)
+		ErrorLogger.Printf("Cannot get %s because it does not exist", key)
 		return nil, ErrKeyNotFound
 	}
 	return &existingData, nil
@@ -154,21 +154,21 @@ func (ds *Datasource) Get(key Key) (*Data, error) {
 
 func (ds *Datasource) Delete(key Key, user string) error {
 	if ds.isClosed() {
-		ErrorLogger.Printf("Cannot delete [%s] because key value store is nil", key)
+		ErrorLogger.Printf("Cannot delete %s because key value store is nil", key)
 		return ErrKvStoreDoesNotExist
 	}
 	ds.Lock()
 	defer ds.Unlock()
 	existingData, ok := ds.kvStore[key]
 	if !ok {
-		ErrorLogger.Printf("Cannot delete [%s] because it does not exist", key)
+		ErrorLogger.Printf("Cannot delete %s because it does not exist", key)
 		return ErrKeyNotFound
 	} else if Authorized(&existingData, user) {
 		delete(ds.kvStore, key)
-		InfoLogger.Printf("Deleted [%s] with value []", key, existingData.value)
+		InfoLogger.Printf("Deleted %s with value <%s>", key, existingData.value)
 		return nil
 	} else {
-		ErrorLogger.Printf("Cannot update [%s] because owners do not match", key)
+		ErrorLogger.Printf("Cannot update %s because owners do not match", key)
 		return ErrValueDeleteForbidden
 	}
 }

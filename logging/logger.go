@@ -9,9 +9,12 @@ import (
 	"time"
 )
 
-var logsDir = "C:/Users/Alex.Khrizman/go_logs/"
-var storeLogName = "datasource.log"
-var requestLogName = "htaccess.log"
+var (
+	logsDir        = "C:/Users/Alex.Khrizman/go_logs/"
+	storeLogName   = "datasource.log"
+	requestLogName = "htaccess.log"
+)
+
 var (
 	RequestLogger  *log.Logger
 	WarningLogger  *log.Logger
@@ -71,19 +74,4 @@ func SetupServerLog() {
 	InfoLogger = log.New(serverLogFile, "INFO:", log.Ldate|log.Ltime|log.Lshortfile)
 	WarningLogger = log.New(serverLogFile, "WARNING:", log.Ldate|log.Ltime|log.Lshortfile)
 	ErrorLogger = log.New(serverLogFile, "ERROR:", log.Ldate|log.Ltime|log.Lshortfile)
-}
-
-// LogAppStart Display available endpoints
-func LogAppStart(port int) {
-	// TODO Maybe put endpoints in an slice and loop through them, or find better way to display endpoints automatically
-	host := fmt.Sprintf("http://localhost:%d", port)
-
-	// TODO Remove these extra print statements after building application
-	fmt.Printf("Server available, see -")
-	fmt.Printf("\n      %s", host)
-	fmt.Printf("\n      %s%s", host, "/ping")
-	fmt.Printf("\n      %s%s", host, "/store/{key}")
-	fmt.Println()
-
-	InfoLogger.Println("Server available, see - %s", host)
 }

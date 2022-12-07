@@ -10,8 +10,11 @@ import (
 	"strconv"
 )
 
-var validPortRangeMin = 1024
-var validPortRangeMax = 65535
+var (
+	validPortRangeMin = 1024
+	validPortRangeMax = 65535
+	host              = "localhost"
+)
 
 // ValidatePort Set port globally if arg value is valid, otherwise exit
 func ValidatePort() int {
@@ -47,4 +50,8 @@ func ExitStatus(i int) int {
 		i *= -1
 	}
 	return i
+}
+
+func ApiHost(port int) string {
+	return fmt.Sprintf("%s:%d", host, port)
 }

@@ -5,82 +5,90 @@ import (
 	"fmt"
 	. "httpstore/datasource"
 	. "httpstore/logging"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 )
 
+var (
+	DatastoreEndpoint    = "/datastore/"
+	textContentType      = "text/plain; charset=utf-8"
+	jsonContentType      = "application/json"
+	forbiddenRespText    = "Forbidden"
+	keyNotFoundRespText  = "404 key not found"
+	okResponseText       = "OK"
+	contentTypeHeaderKey = "Content-Type"
+	userHeaderKey        = "Authorization"
+)
+
 func Store(datasource *Datasource) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
-		fmt.Printf("\nDatasource currently has %d stored value\n", datasource.Size())
-
-		responseWriter.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		InfoLogger.Printf("Processing %s request by user %s", request.Method, request.Header.Get(userHeaderKey))
+		responseWriter.Header().Set(contentTypeHeaderKey, textContentType)
 		switch request.Method {
 		case http.MethodGet:
-			InfoLogger.Println("Processing GET request")
 			RequestLogger.Println(NewRequestLogEntry(request))
 
-			key := strings.TrimPrefix(request.URL.Path, "/datastore/")
+			key := strings.TrimPrefix(request.URL.Path, DatastoreEndpoint)
 			data, getErr := datasource.Get(Key(key))
 			if getErr != nil {
 				http.Error(responseWriter, "error", http.StatusNotFound)
-				responseWriter.Write([]byte("404 key not found"))
+				responseWriter.Write([]byte(keyNotFoundRespText))
 			} else {
 				responseWriter.WriteHeader(http.StatusOK)
 				responseWriter.Write([]byte(data.GetValue()))
 			}
 
 		case http.MethodPut:
-			//fmt.Println("request: ", request.Body)
-
-			InfoLogger.Println("Processing PUT request")
 			RequestLogger.Println(NewRequestLogEntry(request))
 
-			contentHeader := request.Header.Get("Content-Type")
+			contentHeader := request.Header.Get(contentTypeHeaderKey)
 			if contentHeader != "" {
-				if contentHeader != "text/plain; charset=utf-8" {
-					msg := "Content-Type header is not text/plain; charset=utf-8"
+				if contentHeader != textContentType {
+					msg := fmt.Sprintf("%s header is not %s", contentTypeHeaderKey, textContentType)
 					http.Error(responseWriter, msg, http.StatusUnsupportedMediaType)
 					return
 				}
 			}
 
-			key := strings.TrimPrefix(request.URL.Path, "/datastore/")
+			key := strings.TrimPrefix(request.URL.Path, DatastoreEndpoint)
 
-			bytes, err := ioutil.ReadAll(request.Body)
-			//bytes, err := io.ReadAll(request.Body)
+			bytes, err := io.ReadAll(request.Body)
 			defer request.Body.Close()
 			newValue := string(bytes)
 			fmt.Println("request body received: ", newValue)
+			// TODO Not sure how to handle scenario where user does not provide a value
 			if err != nil || len(bytes) == 0 {
-				newValue = "These Aren't the Values you're looking for"
-				fmt.Println("request body empty, setting value =", newValue)
+				WarningLogger.Println("request body empty, setting value")
 			} else {
-				fmt.Println("request body found, setting value =", newValue)
+				InfoLogger.Printf("request body value found, setting for key %s", key)
 			}
 
-			putErr := datasource.Put(Key(key), NewData(request.Header.Get("authorization"), newValue))
+			putErr := datasource.Put(Key(key), NewData(request.Header.Get(userHeaderKey), newValue))
 			if putErr != nil {
 				http.Error(responseWriter, "error", http.StatusForbidden)
+				responseWriter.Write([]byte(forbiddenRespText))
 			} else {
 				responseWriter.WriteHeader(http.StatusOK)
+				responseWriter.Write([]byte("OK"))
 			}
 
 		case http.MethodDelete:
-			InfoLogger.Println("Processing DELETE request")
 			RequestLogger.Println(NewRequestLogEntry(request))
 
-			key := strings.TrimPrefix(request.URL.Path, "/store/")
-			delErr := datasource.Delete(Key(key), request.Header.Get("authorization"))
+			key := strings.TrimPrefix(request.URL.Path, DatastoreEndpoint)
+			delErr := datasource.Delete(Key(key), request.Header.Get(userHeaderKey))
 
 			switch {
 			case errors.Is(delErr, ErrKeyNotFound):
 				responseWriter.WriteHeader(http.StatusNotFound)
-				responseWriter.Write([]byte("404 key not found"))
+				responseWriter.Write([]byte(keyNotFoundRespText))
 			case errors.Is(delErr, ErrValueDeleteForbidden):
 				responseWriter.WriteHeader(http.StatusForbidden)
+				responseWriter.Write([]byte(forbiddenRespText))
 			default:
 				responseWriter.WriteHeader(http.StatusOK)
+				responseWriter.Write([]byte("OK"))
 			}
 
 		default:
