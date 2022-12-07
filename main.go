@@ -20,6 +20,7 @@ func main() {
 	InfoLogger.Println("STARTING KEYSTORE API")
 	var datasource = NewDatasource()
 
+	InfoLogger.Println("Setting Up Route Handlers")
 	http.HandleFunc("/ping", endpoint.Ping)
 	http.HandleFunc("/store/", endpoint.Store(&datasource))
 

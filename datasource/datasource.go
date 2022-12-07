@@ -117,7 +117,7 @@ func (ds *Datasource) Put(key Key, newData Data) error {
 	ds.Lock()
 	defer ds.Unlock()
 	existingData, ok := ds.kvStore[key]
-	if ok && !Authorized(existingData, newData.owner) {
+	if ok && !Authorized(&existingData, newData.owner) {
 		ErrorLogger.Printf("Cannot update [%s] because owners do not match", key)
 		return ErrValueUpdateForbidden
 	} else {

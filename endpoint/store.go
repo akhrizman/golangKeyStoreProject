@@ -35,7 +35,6 @@ func Store(datasource *Datasource) http.HandlerFunc {
 			RequestLogger.Println(NewRequestLogEntry(request))
 
 			contentHeader := request.Header.Get("Content-Type")
-			fmt.Println("contentHeader: ", contentHeader)
 			if contentHeader != "" {
 				if contentHeader != "text/plain; charset=utf-8" {
 					msg := "Content-Type header is not text/plain; charset=utf-8"
@@ -45,7 +44,6 @@ func Store(datasource *Datasource) http.HandlerFunc {
 			}
 
 			key := strings.TrimPrefix(request.URL.Path, "/store/")
-			fmt.Println("key: ", key)
 
 			bytes, err := ioutil.ReadAll(request.Body)
 			defer request.Body.Close()
@@ -82,7 +80,7 @@ func Store(datasource *Datasource) http.HandlerFunc {
 			}
 
 		default:
-			fmt.Println("Method not found")
+			WarningLogger.Println("Method not found")
 			responseWriter.WriteHeader(http.StatusNotFound)
 		}
 	}
