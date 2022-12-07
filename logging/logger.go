@@ -1,9 +1,12 @@
 package logging
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"time"
 )
 
 var logsDir = "C:/Users/Alex.Khrizman/go_logs/"
@@ -26,6 +29,26 @@ func SetupLogFiles() {
 func CloseLogFiles() {
 	RequestLogFile.Close()
 	ServerLogFile.Close()
+}
+
+type RequestLogEntry struct {
+	SourceIP   string    `json:"source IP"`
+	HttpMethod string    `json:"HTTP method"`
+	Url        string    `json:"URL"`
+	Time       time.Time `json:"time of request"`
+}
+
+func (entry RequestLogEntry) String() string {
+	reqDetails, _ := json.Marshal(entry)
+	return string(reqDetails)
+}
+
+func NewRequestLogEntry(request *http.Request) RequestLogEntry {
+	return RequestLogEntry{
+		SourceIP:   request.RemoteAddr,
+		HttpMethod: request.Method,
+		Url:        request.URL.String(),
+		Time:       time.Now()}
 }
 
 // SetupRequestLog Create and setup request log
@@ -59,10 +82,8 @@ func LogAppStart(port int) {
 	fmt.Printf("Server available, see -")
 	fmt.Printf("\n      %s", host)
 	fmt.Printf("\n      %s%s", host, "/ping")
+	fmt.Printf("\n      %s%s", host, "/store/{key}")
 	fmt.Println()
 
-	InfoLogger.Println("Server available, see -",
-		fmt.Sprintf("\n      %s", host),
-		fmt.Sprintf("\n      %s%s", host, "/ping"),
-	)
+	InfoLogger.Println("Server available, see - %s", host)
 }

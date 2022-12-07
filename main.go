@@ -17,12 +17,11 @@ func main() {
 
 	port = server.ValidatePort()
 
+	InfoLogger.Println("STARTING KEYSTORE API")
 	var datasource = NewDatasource()
 
-	InfoLogger.Println("STARTING KEYSTORE API")
-
-	http.HandleFunc("/store/", endpoint.Store(&datasource))
 	http.HandleFunc("/ping", endpoint.Ping)
+	http.HandleFunc("/store/", endpoint.Store(&datasource))
 
 	LogAppStart(port)
 	err := http.ListenAndServe(fmt.Sprintf("localhost:%d", port), nil)

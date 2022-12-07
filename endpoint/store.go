@@ -1,8 +1,10 @@
 package endpoint
 
 import (
+	"errors"
 	"fmt"
 	. "httpstore/datasource"
+	. "httpstore/logging"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -10,12 +12,28 @@ import (
 
 func Store(datasource *Datasource) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
+		fmt.Printf("\nDatasource currently has %d stored value", datasource.Size())
+
 		responseWriter.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		switch request.Method {
 		case http.MethodGet:
-			fmt.Println("Processing GET request")
+			InfoLogger.Println("Processing GET request")
+			RequestLogger.Println(NewRequestLogEntry(request))
+
+			key := strings.TrimPrefix(request.URL.Path, "/store/")
+			data, getErr := datasource.Get(Key(key))
+			if getErr != nil {
+				http.Error(responseWriter, "error", http.StatusNotFound)
+				responseWriter.Write([]byte("404 key not found"))
+			} else {
+				responseWriter.WriteHeader(http.StatusOK)
+				responseWriter.Write([]byte(data.GetValue()))
+			}
+
 		case http.MethodPut:
-			fmt.Println("Processing PUT request")
+			InfoLogger.Println("Processing PUT request")
+			RequestLogger.Println(NewRequestLogEntry(request))
+
 			contentHeader := request.Header.Get("Content-Type")
 			fmt.Println("contentHeader: ", contentHeader)
 			if contentHeader != "" {
@@ -25,12 +43,6 @@ func Store(datasource *Datasource) http.HandlerFunc {
 					return
 				}
 			}
-			fmt.Printf("Datasource currently has %d stored value", datasource.Size())
-
-			fmt.Println("request: ", &request)
-			fmt.Println("request.RemoteAddr", request.RemoteAddr)
-			fmt.Println("request.Method", request.Method)
-			fmt.Println("request.URL", request.URL)
 
 			key := strings.TrimPrefix(request.URL.Path, "/store/")
 			fmt.Println("key: ", key)
@@ -48,11 +60,27 @@ func Store(datasource *Datasource) http.HandlerFunc {
 			putErr := datasource.Put(Key(key), NewData(request.Header.Get("authorization"), "testValueForNow"))
 			if putErr != nil {
 				http.Error(responseWriter, "error", http.StatusForbidden)
+			} else {
+				responseWriter.WriteHeader(http.StatusOK)
 			}
-			fmt.Printf("Datasource currently has %d stored value", datasource.Size())
 
 		case http.MethodDelete:
-			fmt.Println("Processing DELETE request")
+			InfoLogger.Println("Processing DELETE request")
+			RequestLogger.Println(NewRequestLogEntry(request))
+
+			key := strings.TrimPrefix(request.URL.Path, "/store/")
+			delErr := datasource.Delete(Key(key), request.Header.Get("authorization"))
+
+			switch {
+			case errors.Is(delErr, ErrKeyNotFound):
+				responseWriter.WriteHeader(http.StatusNotFound)
+				responseWriter.Write([]byte("404 key not found"))
+			case errors.Is(delErr, ErrValueDeleteForbidden):
+				responseWriter.WriteHeader(http.StatusForbidden)
+			default:
+				responseWriter.WriteHeader(http.StatusOK)
+			}
+
 		default:
 			fmt.Println("Method not found")
 			responseWriter.WriteHeader(http.StatusNotFound)
