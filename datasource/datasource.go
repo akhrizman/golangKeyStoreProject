@@ -118,7 +118,7 @@ func (ds *Datasource) Put(key Key, newData Data) error {
 	defer ds.Unlock()
 	existingData, ok := ds.kvStore[key]
 	if ok && !Authorized(&existingData, newData.owner) {
-		ErrorLogger.Printf("Cannot update %s because owners do not match", key)
+		WarningLogger.Printf("Cannot update %s because owners do not match", key)
 		return ErrValueUpdateForbidden
 	} else {
 		ds.kvStore[key] = newData
@@ -146,7 +146,7 @@ func (ds *Datasource) Get(key Key) (*Data, error) {
 	defer ds.RUnlock()
 	existingData, ok := ds.kvStore[key]
 	if !ok {
-		ErrorLogger.Printf("Cannot get %s because it does not exist", key)
+		InfoLogger.Printf("Cannot get %s because it does not exist", key)
 		return nil, ErrKeyNotFound
 	}
 	return &existingData, nil
@@ -168,8 +168,39 @@ func (ds *Datasource) Delete(key Key, user string) error {
 		InfoLogger.Printf("Deleted %s with value <%s>", key, existingData.value)
 		return nil
 	} else {
-		ErrorLogger.Printf("Cannot update %s because owners do not match", key)
+		WarningLogger.Printf("Cannot update %s because owners do not match", key)
 		return ErrValueDeleteForbidden
+	}
+}
+
+// GetAllEntries Generate and return all datasource entries
+func (ds *Datasource) GetAllEntries() []Entry {
+	//TODO May need to optimize for larger key store sets i.e. fan in fan out retrieval
+	ds.Lock()
+	defer ds.Unlock()
+	entries := make([]Entry, ds.Size())
+	i := 0
+	for key, data := range ds.kvStore {
+		entries[i] = NewEntry(key, data)
+		i++
+	}
+	return entries
+}
+
+// GetEntry Generate and return a single datasource entry
+func (ds *Datasource) GetEntry(key Key) (Entry, error) {
+	if ds.isClosed() {
+		ErrorLogger.Printf("Cannot get %s because key value store is nil", key)
+		return Entry{}, ErrKvStoreDoesNotExist
+	}
+	ds.Lock()
+	defer ds.Unlock()
+	existingData, ok := ds.kvStore[key]
+	if !ok {
+		InfoLogger.Printf("Cannot get %s because it does not exist", key)
+		return Entry{}, ErrKeyNotFound
+	} else {
+		return NewEntry(key, existingData), nil
 	}
 }
 

@@ -23,6 +23,7 @@ func main() {
 	InfoLogger.Println("Setting Up Route Handlers")
 	http.HandleFunc(PingEndpoint, Ping)
 	http.HandleFunc(DatastoreEndpoint, Store(&datasource))
+	http.HandleFunc(ListEndpoint, List(&datasource))
 
 	apiHost := server.ApiHost(port)
 	InfoLogger.Printf("Server available, see - http://%s", apiHost)

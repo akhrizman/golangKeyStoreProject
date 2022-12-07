@@ -13,7 +13,6 @@ import (
 var (
 	DatastoreEndpoint    = "/datastore/"
 	textContentType      = "text/plain; charset=utf-8"
-	jsonContentType      = "application/json"
 	forbiddenRespText    = "Forbidden"
 	keyNotFoundRespText  = "404 key not found"
 	okResponseText       = "OK"
@@ -23,12 +22,13 @@ var (
 
 func Store(datasource *Datasource) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
-		InfoLogger.Printf("Processing %s request by user %s", request.Method, request.Header.Get(userHeaderKey))
+		user := request.Header.Get(userHeaderKey)
+		InfoLogger.Printf("Processing %s request by user %s", request.Method, user)
+		RequestLogger.Println(NewRequestLogEntry(request))
 		responseWriter.Header().Set(contentTypeHeaderKey, textContentType)
+
 		switch request.Method {
 		case http.MethodGet:
-			RequestLogger.Println(NewRequestLogEntry(request))
-
 			key := strings.TrimPrefix(request.URL.Path, DatastoreEndpoint)
 			data, getErr := datasource.Get(Key(key))
 			if getErr != nil {
@@ -40,8 +40,6 @@ func Store(datasource *Datasource) http.HandlerFunc {
 			}
 
 		case http.MethodPut:
-			RequestLogger.Println(NewRequestLogEntry(request))
-
 			contentHeader := request.Header.Get(contentTypeHeaderKey)
 			if contentHeader != "" {
 				if contentHeader != textContentType {
@@ -64,8 +62,9 @@ func Store(datasource *Datasource) http.HandlerFunc {
 				InfoLogger.Printf("request body value found, setting for key %s", key)
 			}
 
-			putErr := datasource.Put(Key(key), NewData(request.Header.Get(userHeaderKey), newValue))
+			putErr := datasource.Put(Key(key), NewData(user, newValue))
 			if putErr != nil {
+				InfoLogger.Printf("Unauthorized update to %s attempted by user: %s", key, user)
 				http.Error(responseWriter, "error", http.StatusForbidden)
 				responseWriter.Write([]byte(forbiddenRespText))
 			} else {
@@ -74,8 +73,6 @@ func Store(datasource *Datasource) http.HandlerFunc {
 			}
 
 		case http.MethodDelete:
-			RequestLogger.Println(NewRequestLogEntry(request))
-
 			key := strings.TrimPrefix(request.URL.Path, DatastoreEndpoint)
 			delErr := datasource.Delete(Key(key), request.Header.Get(userHeaderKey))
 
@@ -84,9 +81,11 @@ func Store(datasource *Datasource) http.HandlerFunc {
 				responseWriter.WriteHeader(http.StatusNotFound)
 				responseWriter.Write([]byte(keyNotFoundRespText))
 			case errors.Is(delErr, ErrValueDeleteForbidden):
+				InfoLogger.Printf("Unauthorized deletion of %s attempted by user: %s", key, user)
 				responseWriter.WriteHeader(http.StatusForbidden)
 				responseWriter.Write([]byte(forbiddenRespText))
 			default:
+				InfoLogger.Printf("%s deleted successfully", key)
 				responseWriter.WriteHeader(http.StatusOK)
 				responseWriter.Write([]byte("OK"))
 			}
