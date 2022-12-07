@@ -12,7 +12,7 @@ import (
 
 func Store(datasource *Datasource) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
-		fmt.Printf("\nDatasource currently has %d stored value", datasource.Size())
+		fmt.Printf("\nDatasource currently has %d stored value\n", datasource.Size())
 
 		responseWriter.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		switch request.Method {
@@ -20,7 +20,7 @@ func Store(datasource *Datasource) http.HandlerFunc {
 			InfoLogger.Println("Processing GET request")
 			RequestLogger.Println(NewRequestLogEntry(request))
 
-			key := strings.TrimPrefix(request.URL.Path, "/store/")
+			key := strings.TrimPrefix(request.URL.Path, "/datastore/")
 			data, getErr := datasource.Get(Key(key))
 			if getErr != nil {
 				http.Error(responseWriter, "error", http.StatusNotFound)
@@ -31,6 +31,8 @@ func Store(datasource *Datasource) http.HandlerFunc {
 			}
 
 		case http.MethodPut:
+			fmt.Println("request: ", request.Body)
+
 			InfoLogger.Println("Processing PUT request")
 			RequestLogger.Println(NewRequestLogEntry(request))
 
@@ -46,16 +48,31 @@ func Store(datasource *Datasource) http.HandlerFunc {
 			key := strings.TrimPrefix(request.URL.Path, "/store/")
 
 			bytes, err := ioutil.ReadAll(request.Body)
+			//bytes, err := io.ReadAll(request.Body)
 			defer request.Body.Close()
+			var newValue string
 			if err != nil || len(bytes) == 0 {
 				fmt.Println("err: ", err)
 				fmt.Println("len(bytes): ", len(bytes))
+				newValue = "testValueForNow"
 			} else {
 				fmt.Printf("\nbytes: %s", bytes)
+				newValue = string(bytes)
 			}
-
 			//value := http.MaxBytesReader(responseWriter, request.Body, 1048576)
-			putErr := datasource.Put(Key(key), NewData(request.Header.Get("authorization"), "testValueForNow"))
+
+			//valueBytes := make([]byte, 256)
+			//size, err := request.Body.Read(valueBytes)
+			//if err != nil || size == 0 {
+			//	fmt.Println("err: ", err)
+			//	fmt.Println("size: ", size)
+			//} else {
+			//	valueBytes = append([]byte(nil), valueBytes[:size]...)
+			//	fmt.Printf("\nbytes: %s", size)
+			//	fmt.Println(valueBytes)
+			//}
+
+			putErr := datasource.Put(Key(key), NewData(request.Header.Get("authorization"), newValue))
 			if putErr != nil {
 				http.Error(responseWriter, "error", http.StatusForbidden)
 			} else {

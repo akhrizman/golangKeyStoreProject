@@ -22,7 +22,7 @@ func main() {
 
 	InfoLogger.Println("Setting Up Route Handlers")
 	http.HandleFunc("/ping", endpoint.Ping)
-	http.HandleFunc("/store/", endpoint.Store(&datasource))
+	http.HandleFunc("/datastore/", endpoint.Store(&datasource))
 
 	LogAppStart(port)
 	err := http.ListenAndServe(fmt.Sprintf("localhost:%d", port), nil)
