@@ -2,7 +2,6 @@ package endpoint
 
 import (
 	"errors"
-	"fmt"
 	. "httpstore/datasource"
 	. "httpstore/logging"
 	"io"
@@ -32,7 +31,7 @@ func Store(datasource *Datasource) http.HandlerFunc {
 			key := strings.TrimPrefix(request.URL.Path, DatastoreEndpoint)
 			data, getErr := datasource.Get(Key(key))
 			if getErr != nil {
-				http.Error(responseWriter, "error", http.StatusNotFound)
+				responseWriter.WriteHeader(http.StatusNotFound)
 				responseWriter.Write([]byte(keyNotFoundRespText))
 			} else {
 				responseWriter.WriteHeader(http.StatusOK)
@@ -43,8 +42,8 @@ func Store(datasource *Datasource) http.HandlerFunc {
 			contentHeader := request.Header.Get(contentTypeHeaderKey)
 			if contentHeader != "" {
 				if contentHeader != textContentType {
-					msg := fmt.Sprintf("%s header is not %s", contentTypeHeaderKey, textContentType)
-					http.Error(responseWriter, msg, http.StatusUnsupportedMediaType)
+					ErrorLogger.Printf("%s header is not %s", contentTypeHeaderKey, textContentType)
+					responseWriter.WriteHeader(http.StatusUnsupportedMediaType)
 					return
 				}
 			}
@@ -54,7 +53,7 @@ func Store(datasource *Datasource) http.HandlerFunc {
 			bytes, err := io.ReadAll(request.Body)
 			defer request.Body.Close()
 			newValue := string(bytes)
-			fmt.Println("request body received: ", newValue)
+			//fmt.Println("request body received: ", newValue)
 			// TODO Not sure how to handle scenario where user does not provide a value
 			if err != nil || len(bytes) == 0 {
 				WarningLogger.Println("request body empty, setting value")
@@ -65,11 +64,11 @@ func Store(datasource *Datasource) http.HandlerFunc {
 			putErr := datasource.Put(Key(key), NewData(user, newValue))
 			if putErr != nil {
 				InfoLogger.Printf("Unauthorized update to %s attempted by user: %s", key, user)
-				http.Error(responseWriter, "error", http.StatusForbidden)
+				responseWriter.WriteHeader(http.StatusForbidden)
 				responseWriter.Write([]byte(forbiddenRespText))
 			} else {
 				responseWriter.WriteHeader(http.StatusOK)
-				responseWriter.Write([]byte("OK"))
+				responseWriter.Write([]byte(okResponseText))
 			}
 
 		case http.MethodDelete:
@@ -87,7 +86,7 @@ func Store(datasource *Datasource) http.HandlerFunc {
 			default:
 				InfoLogger.Printf("%s deleted successfully", key)
 				responseWriter.WriteHeader(http.StatusOK)
-				responseWriter.Write([]byte("OK"))
+				responseWriter.Write([]byte(okResponseText))
 			}
 
 		default:

@@ -24,6 +24,7 @@ func main() {
 	http.HandleFunc(PingEndpoint, Ping)
 	http.HandleFunc(DatastoreEndpoint, Store(&datasource))
 	http.HandleFunc(ListEndpoint, List(&datasource))
+	http.HandleFunc(ShutdownEndpoint, Shutdown)
 
 	apiHost := server.ApiHost(port)
 	InfoLogger.Printf("Server available, see - http://%s", apiHost)

@@ -26,29 +26,29 @@ func List(datasource *Datasource) http.HandlerFunc {
 				entriesJson, errGetAll := json.Marshal(datasource.GetAllEntries())
 				if errGetAll != nil {
 					ErrorLogger.Println("Unable to convert Detail Entries to JSON", errGetAll)
-					http.Error(responseWriter, "Error", http.StatusInternalServerError)
+					responseWriter.WriteHeader(http.StatusInternalServerError)
 				} else {
 					responseWriter.WriteHeader(http.StatusOK)
 					_, err := responseWriter.Write(entriesJson)
 					if err != nil {
-						http.Error(responseWriter, "error writing entries", http.StatusInternalServerError)
+						responseWriter.WriteHeader(http.StatusInternalServerError)
 					}
 				}
 			} else {
 				entry, errGetOne := datasource.GetEntry(Key(key))
 				if errGetOne != nil {
-					http.Error(responseWriter, "Error", http.StatusNotFound)
+					responseWriter.WriteHeader(http.StatusNotFound)
 					responseWriter.Write([]byte(keyNotFoundRespText))
 				} else {
 					entryJson, errJson := json.Marshal(entry)
 					if errJson != nil {
 						ErrorLogger.Println("Unable to convert Detail Entry to JSON", errJson)
-						http.Error(responseWriter, "Error", http.StatusInternalServerError)
+						responseWriter.WriteHeader(http.StatusInternalServerError)
 					} else {
 						responseWriter.WriteHeader(http.StatusOK)
 						_, err := responseWriter.Write(entryJson)
 						if err != nil {
-							http.Error(responseWriter, "error writing entry", http.StatusInternalServerError)
+							responseWriter.WriteHeader(http.StatusInternalServerError)
 						}
 					}
 				}
@@ -57,7 +57,7 @@ func List(datasource *Datasource) http.HandlerFunc {
 			responseWriter.WriteHeader(http.StatusNotFound)
 			_, err := responseWriter.Write([]byte(`{"message": "not found"}`))
 			if err != nil {
-				http.Error(responseWriter, "error writing output", http.StatusInternalServerError)
+				responseWriter.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 		}
