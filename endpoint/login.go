@@ -5,7 +5,6 @@ import (
 	. "httpstore/logging"
 	. "httpstore/server"
 	"net/http"
-	"time"
 )
 
 var LoginEndpoint = "/login"
@@ -15,23 +14,17 @@ func Login(responseWriter http.ResponseWriter, request *http.Request) {
 	RequestLogger.Println(NewRequestLogEntry(request))
 	responseWriter.Header().Set(contentTypeHeaderKey, textContentType)
 
-	username := ValidateLoginCredentials(request)
+	username := Authenticate(request)
 	if username == "" {
 		responseWriter.WriteHeader(http.StatusUnauthorized)
 		return
 	} else {
-		expirationTime := time.Now().Add(5 * time.Minute)
-		tokenString := GenerateBearerToken(username, expirationTime)
-		fmt.Println("tokenString: ", tokenString)
-		if tokenString == "" {
+		bearerToken := GenerateBearerToken(username)
+		if bearerToken == "" {
 			responseWriter.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		http.SetCookie(responseWriter, &http.Cookie{
-			Name:    "token",
-			Value:   tokenString,
-			Expires: expirationTime,
-		})
+		responseWriter.Header().Set("Authorization", fmt.Sprintf("Bearer %s", bearerToken))
 		InfoLogger.Printf("Authenticated User %s", username)
 	}
 }

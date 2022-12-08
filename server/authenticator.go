@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"github.com/golang-jwt/jwt"
 	. "httpstore/logging"
 	"net/http"
@@ -21,12 +22,15 @@ type Claims struct {
 
 var jwtKey = []byte("bird_person")
 
-// Authenticate Return user if request is authenticated
-func Authenticate(request *http.Request) string {
+// Authorize Return user if request is authenticated
+func Authorize(request *http.Request) string {
+	bearerToken := request.Header.Get("Authorization")
+	fmt.Println(bearerToken)
 	return ""
 }
 
-func ValidateLoginCredentials(request *http.Request) string {
+// Authenticate Validate user-provided credentials
+func Authenticate(request *http.Request) string {
 	username, password, ok := request.BasicAuth()
 	if !ok {
 		ErrorLogger.Println("Error parsing basic auth", ok)
@@ -44,8 +48,10 @@ func ValidateLoginCredentials(request *http.Request) string {
 	return username
 }
 
-func GenerateBearerToken(username string, expirationTime time.Time) string {
+// GenerateBearerToken Create JWT claims and signed token
+func GenerateBearerToken(username string) string {
 	// Create JWT claims
+	expirationTime := time.Now().Add(5 * time.Minute)
 	claims := &Claims{
 		Username: username,
 		StandardClaims: jwt.StandardClaims{
@@ -60,5 +66,6 @@ func GenerateBearerToken(username string, expirationTime time.Time) string {
 		ErrorLogger.Printf("Error creating the token: %v", err)
 		return ""
 	}
+	fmt.Printf("User: %s - %s", username, tokenString)
 	return tokenString
 }
