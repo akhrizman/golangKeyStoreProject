@@ -5,8 +5,11 @@ import (
 	"github.com/golang-jwt/jwt"
 	. "httpstore/logging"
 	"net/http"
+	"strings"
 	"time"
 )
+
+var AuthorizationHeaderKey = "Authorization"
 
 var users = map[string]string{
 	"user_a": "passwordA",
@@ -22,11 +25,38 @@ type Claims struct {
 
 var jwtKey = []byte("bird_person")
 
-// Authorize Return user if request is authenticated
-func Authorize(request *http.Request) string {
-	bearerToken := request.Header.Get("Authorization")
-	fmt.Println(bearerToken)
-	return ""
+// Authorize Return user provided by bearer token if request is authenticated
+func Authorize(responseWriter http.ResponseWriter, request *http.Request) string {
+	auth := request.Header.Get(AuthorizationHeaderKey)
+	if auth == "" {
+		responseWriter.WriteHeader(http.StatusUnauthorized)
+		return ""
+	}
+	tokenString := strings.Replace(auth, "Bearer ", "", 1)
+	fmt.Println(tokenString)
+
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+	if err != nil {
+		if err == jwt.ErrSignatureInvalid {
+			fmt.Printf("Error signature invalid %v\n", err)
+			responseWriter.WriteHeader(http.StatusUnauthorized)
+			return ""
+		}
+		fmt.Printf("Error processing JWT token %v\n", err)
+		responseWriter.WriteHeader(http.StatusBadRequest)
+		return ""
+	}
+	if !token.Valid {
+		fmt.Printf("Error invalid token %v\n", err)
+		responseWriter.WriteHeader(http.StatusUnauthorized)
+		return ""
+	}
+
+	// username given in the token
+	return claims.Username
 }
 
 // Authenticate Validate user-provided credentials
@@ -51,7 +81,7 @@ func Authenticate(request *http.Request) string {
 // GenerateBearerToken Create JWT claims and signed token
 func GenerateBearerToken(username string) string {
 	// Create JWT claims
-	expirationTime := time.Now().Add(5 * time.Minute)
+	expirationTime := time.Now().Add(30 * time.Minute)
 	claims := &Claims{
 		Username: username,
 		StandardClaims: jwt.StandardClaims{

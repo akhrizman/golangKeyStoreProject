@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	. "httpstore/datasource"
 	. "httpstore/logging"
+	"httpstore/server"
 	"net/http"
 	"strings"
 )
@@ -15,9 +16,17 @@ var (
 
 func List(datasource *Datasource) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
-		InfoLogger.Printf("Processing %s request by user %s", request.Method, request.Header.Get(userHeaderKey))
 		RequestLogger.Println(NewRequestLogEntry(request))
+
+		user := server.Authorize(responseWriter, request)
+		if user == "" {
+			InfoLogger.Printf("Unable to process request: Failed Authorization", request.Method)
+			return
+		}
+
+		InfoLogger.Printf("Processing %s request by user %s", request.Method, user)
 		responseWriter.Header().Set(contentTypeHeaderKey, jsonContentType)
+
 		key := strings.TrimPrefix(request.URL.Path, ListEndpoint)
 
 		switch request.Method {

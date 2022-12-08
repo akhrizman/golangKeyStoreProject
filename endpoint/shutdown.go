@@ -11,9 +11,15 @@ import (
 var ShutdownEndpoint = "/shutdown"
 
 func Shutdown(responseWriter http.ResponseWriter, request *http.Request) {
-	user := request.Header.Get(userHeaderKey)
-	InfoLogger.Printf("Processing %s request by user %s", request.Method, user)
 	RequestLogger.Println(NewRequestLogEntry(request))
+
+	user := server.Authorize(responseWriter, request)
+	if user == "" || user != "admin" {
+		InfoLogger.Printf("Unable to process request: Failed Authorization", request.Method)
+		return
+	}
+
+	InfoLogger.Printf("Processing %s request by user %s", request.Method, user)
 	responseWriter.Header().Set(contentTypeHeaderKey, textContentType)
 
 	if user != "admin" {

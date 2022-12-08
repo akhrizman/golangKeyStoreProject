@@ -4,6 +4,7 @@ import (
 	"errors"
 	. "httpstore/datasource"
 	. "httpstore/logging"
+	"httpstore/server"
 	"io"
 	"net/http"
 	"strings"
@@ -16,14 +17,19 @@ var (
 	keyNotFoundRespText  = "404 key not found"
 	okResponseText       = "OK"
 	contentTypeHeaderKey = "Content-Type"
-	userHeaderKey        = "Authorization"
 )
 
 func Store(datasource *Datasource) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
-		user := request.Header.Get(userHeaderKey)
-		InfoLogger.Printf("Processing %s request by user %s", request.Method, user)
 		RequestLogger.Println(NewRequestLogEntry(request))
+
+		user := server.Authorize(responseWriter, request)
+		if user == "" {
+			InfoLogger.Printf("Unable to process request: Failed Authorization", request.Method)
+			return
+		}
+
+		InfoLogger.Printf("Processing %s request by user %s", request.Method, user)
 		responseWriter.Header().Set(contentTypeHeaderKey, textContentType)
 
 		switch request.Method {
@@ -73,7 +79,7 @@ func Store(datasource *Datasource) http.HandlerFunc {
 
 		case http.MethodDelete:
 			key := strings.TrimPrefix(request.URL.Path, DatastoreEndpoint)
-			delErr := datasource.Delete(Key(key), request.Header.Get(userHeaderKey))
+			delErr := datasource.Delete(Key(key), user)
 
 			switch {
 			case errors.Is(delErr, ErrKeyNotFound):
