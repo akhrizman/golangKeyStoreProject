@@ -1,4 +1,4 @@
-package logging
+package log4g
 
 import (
 	"encoding/json"
@@ -16,10 +16,10 @@ var (
 )
 
 var (
-	RequestLogger  *log.Logger
-	WarningLogger  *log.Logger
-	InfoLogger     *log.Logger
-	ErrorLogger    *log.Logger
+	Request        *log.Logger
+	Warning        *log.Logger
+	Info           *log.Logger
+	Error          *log.Logger
 	RequestLogFile *os.File
 	ServerLogFile  *os.File
 )
@@ -58,20 +58,20 @@ func NewRequestLogEntry(request *http.Request) RequestLogEntry {
 func SetupRequestLog() {
 	requestLogFile, fileErr := os.OpenFile(fmt.Sprintf("%s%s", logsDir, requestLogName), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if fileErr != nil {
-		RequestLogger.Fatal(fileErr)
+		Request.Fatal(fileErr)
 	}
 
-	RequestLogger = log.New(requestLogFile, "", log.Ldate|log.Ltime)
+	Request = log.New(requestLogFile, "", log.Ldate|log.Ltime)
 }
 
 // SetupServerLog Create and setup server log
 func SetupServerLog() {
 	serverLogFile, fileErr := os.OpenFile(fmt.Sprintf("%s%s", logsDir, storeLogName), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if fileErr != nil {
-		ErrorLogger.Fatal(fileErr)
+		Error.Fatal(fileErr)
 	}
 
-	InfoLogger = log.New(serverLogFile, "INFO:", log.Ldate|log.Ltime|log.Lshortfile)
-	WarningLogger = log.New(serverLogFile, "WARNING:", log.Ldate|log.Ltime|log.Lshortfile)
-	ErrorLogger = log.New(serverLogFile, "ERROR:", log.Ldate|log.Ltime|log.Lshortfile)
+	Info = log.New(serverLogFile, "INFO:", log.Ldate|log.Ltime|log.Lshortfile)
+	Warning = log.New(serverLogFile, "WARNING:", log.Ldate|log.Ltime|log.Lshortfile)
+	Error = log.New(serverLogFile, "ERROR:", log.Ldate|log.Ltime|log.Lshortfile)
 }

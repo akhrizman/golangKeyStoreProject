@@ -2,29 +2,29 @@ package endpoint
 
 import (
 	"fmt"
-	. "httpstore/logging"
-	. "httpstore/server"
+	"httpstore/log4g"
+	"httpstore/server"
 	"net/http"
 )
 
 var LoginEndpoint = "/login"
 
 func Login(responseWriter http.ResponseWriter, request *http.Request) {
-	InfoLogger.Println("Processing login request")
-	RequestLogger.Println(NewRequestLogEntry(request))
+	log4g.Info.Println("Processing login request")
+	log4g.Request.Println(log4g.NewRequestLogEntry(request))
 	responseWriter.Header().Set(contentTypeHeaderKey, textContentType)
 
-	username := Authenticate(request)
+	username := server.Authenticate(request)
 	if username == "" {
 		responseWriter.WriteHeader(http.StatusUnauthorized)
 		return
 	} else {
-		bearerToken := GenerateBearerToken(username)
+		bearerToken := server.GenerateBearerToken(username)
 		if bearerToken == "" {
 			responseWriter.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		responseWriter.Header().Set("Authorization", fmt.Sprintf("Bearer %s", bearerToken))
-		InfoLogger.Printf("Authenticated User %s", username)
+		log4g.Info.Printf("Authenticated User %s", username)
 	}
 }

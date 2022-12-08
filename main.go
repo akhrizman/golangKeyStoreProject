@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"httpstore/datasource"
 	. "httpstore/endpoint"
-	. "httpstore/logging"
+	"httpstore/log4g"
 	"httpstore/server"
 	"net/http"
 )
@@ -12,15 +12,15 @@ import (
 var port int
 
 func main() {
-	SetupLogFiles()
-	defer CloseLogFiles()
+	log4g.SetupLogFiles()
+	defer log4g.CloseLogFiles()
 
 	port = server.ValidatePort()
 
-	InfoLogger.Println("STARTING KEYSTORE API")
+	log4g.Info.Println("STARTING HTTP DATASTORE")
 	var datasource = datasource.NewDatasource()
 
-	InfoLogger.Println("Setting Up Route Handlers")
+	log4g.Info.Println("Setting Up Route Handlers")
 	http.HandleFunc(PingEndpoint, Ping)
 	http.HandleFunc(LoginEndpoint, Login)
 	http.HandleFunc(DatastoreEndpoint, Store(&datasource))
@@ -28,7 +28,7 @@ func main() {
 	http.HandleFunc(ShutdownEndpoint, Shutdown)
 
 	apiHost := server.ApiHost(port)
-	InfoLogger.Printf("Server available, see - http://%s", apiHost)
+	log4g.Info.Printf("Server available, see - http://%s", apiHost)
 	err := http.ListenAndServe(fmt.Sprintf(apiHost), nil)
 	if err != nil {
 		server.ExitOnErrors(port, err)

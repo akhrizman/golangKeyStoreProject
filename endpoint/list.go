@@ -3,7 +3,7 @@ package endpoint
 import (
 	"encoding/json"
 	. "httpstore/datasource"
-	. "httpstore/logging"
+	"httpstore/log4g"
 	"httpstore/server"
 	"net/http"
 	"strings"
@@ -16,15 +16,14 @@ var (
 
 func List(datasource *Datasource) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
-		RequestLogger.Println(NewRequestLogEntry(request))
+		log4g.Request.Println(log4g.NewRequestLogEntry(request))
 
-		user := server.Authorize(responseWriter, request)
+		user := server.AuthorizedUser(responseWriter, request)
 		if user == "" {
-			InfoLogger.Printf("Unable to process request: Failed Authorization", request.Method)
+			log4g.Info.Printf("Unable to process request: Failed Authorization", request.Method)
 			return
 		}
 
-		InfoLogger.Printf("Processing %s request by user %s", request.Method, user)
 		responseWriter.Header().Set(contentTypeHeaderKey, jsonContentType)
 
 		key := strings.TrimPrefix(request.URL.Path, ListEndpoint)
@@ -34,7 +33,7 @@ func List(datasource *Datasource) http.HandlerFunc {
 			if key == "" {
 				entriesJson, errGetAll := json.Marshal(datasource.GetAllEntries())
 				if errGetAll != nil {
-					ErrorLogger.Println("Unable to convert Detail Entries to JSON", errGetAll)
+					log4g.Error.Println("Unable to convert Detail Entries to JSON", errGetAll)
 					responseWriter.WriteHeader(http.StatusInternalServerError)
 				} else {
 					responseWriter.WriteHeader(http.StatusOK)
@@ -51,7 +50,7 @@ func List(datasource *Datasource) http.HandlerFunc {
 				} else {
 					entryJson, errJson := json.Marshal(entry)
 					if errJson != nil {
-						ErrorLogger.Println("Unable to convert Detail Entry to JSON", errJson)
+						log4g.Error.Println("Unable to convert Detail Entry to JSON", errJson)
 						responseWriter.WriteHeader(http.StatusInternalServerError)
 					} else {
 						responseWriter.WriteHeader(http.StatusOK)

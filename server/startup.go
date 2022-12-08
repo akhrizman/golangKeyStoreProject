@@ -3,7 +3,7 @@ package server
 import (
 	"flag"
 	"fmt"
-	"httpstore/logging"
+	"httpstore/log4g"
 	"net"
 	"os"
 	"runtime"
@@ -34,11 +34,11 @@ func ExitOnErrors(port int, err error) {
 	switch t := err.(type) {
 	case *net.OpError:
 		fmt.Printf("Error Binding port %d - %s\n", port, t)
-		logging.ErrorLogger.Printf("Error Binding port %d - %s\n", port, t)
+		log4g.Error.Printf("Error Binding port %d - %s\n", port, t)
 		os.Exit(ExitStatus(-2))
 	default:
 		fmt.Println("Error Starting Server - ", err)
-		logging.ErrorLogger.Println("Error Starting Server - ", err)
+		log4g.Error.Println("Error Starting Server - ", err)
 	}
 }
 
