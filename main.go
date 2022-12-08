@@ -22,6 +22,7 @@ func main() {
 
 	InfoLogger.Println("Setting Up Route Handlers")
 	http.HandleFunc(PingEndpoint, Ping)
+	http.HandleFunc(LoginEndpoint, Login)
 	http.HandleFunc(DatastoreEndpoint, Store(&datasource))
 	http.HandleFunc(ListEndpoint, List(&datasource))
 	http.HandleFunc(ShutdownEndpoint, Shutdown)
