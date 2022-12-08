@@ -14,7 +14,8 @@ func Shutdown(responseWriter http.ResponseWriter, request *http.Request) {
 	RequestLogger.Println(NewRequestLogEntry(request))
 
 	user := server.Authorize(responseWriter, request)
-	if user == "" || user != "admin" {
+	if user == "" {
+		//Responses handled during Authorization
 		InfoLogger.Printf("Unable to process request: Failed Authorization", request.Method)
 		return
 	}

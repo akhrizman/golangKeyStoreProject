@@ -23,7 +23,7 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-var jwtKey = []byte("bird_person")
+var jwtKey = []byte("bird_person") // USE REAL KEY IN PRODUCTION!!!
 
 // Authorize Return user provided by bearer token if request is authenticated
 func Authorize(responseWriter http.ResponseWriter, request *http.Request) string {

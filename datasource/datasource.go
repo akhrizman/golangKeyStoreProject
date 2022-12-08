@@ -175,5 +175,10 @@ func (ds *Datasource) GetEntry(key Key) (Entry, error) {
 }
 
 func Authorized(data *Data, user string) bool {
+	// At this point, if user is admin, then any PUT/DELETE should
+	// behave as if being performed by the original key's owner
+	if user == "admin" {
+		user = data.owner
+	}
 	return data.owner == user
 }
