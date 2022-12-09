@@ -17,27 +17,26 @@ type Data struct {
 	owner    string
 	value    string
 	lastUsed time.Time
+	writes   int
+	reads    int
 }
 
 func NewData(user string, value string) Data {
-	return Data{owner: user, value: value, lastUsed: time.Now()}
+	return Data{
+		owner:    user,
+		value:    value,
+		lastUsed: time.Now(),
+		writes:   0,
+		reads:    0,
+	}
 }
-
 func (d *Data) SetToCurrentTime() {
 	d.lastUsed = time.Now()
 }
-
-//	func (d *Data) GetOwner() string {
-//		return d.owner
-//	}
-//
-//	func (d *Data) SetOwner(owner string) {
-//		d.owner = owner
-//	}
 func (d *Data) GetValue() string {
 	return d.value
 }
-
-//func (d *Data) SetValue(value string) {
-//	d.value = value
-//}
+func (d *Data) Age() int64 {
+	currentTime := time.Now()
+	return currentTime.UnixMilli() - d.lastUsed.UnixMilli()
+}

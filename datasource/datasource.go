@@ -111,7 +111,7 @@ func (ds *Datasource) CreateKvStore() error {
 	return nil
 }
 
-func (ds *Datasource) Put(key Key, newData Data) error {
+func (ds *Datasource) Put(key Key, user string, value string) error {
 	if ds.isClosed() {
 		log4g.Error.Printf("Cannot insert %s because key value store is nil", key)
 		return ErrKvStoreDoesNotExist
@@ -119,27 +119,36 @@ func (ds *Datasource) Put(key Key, newData Data) error {
 	ds.Lock()
 	defer ds.Unlock()
 	existingData, ok := ds.kvStore[key]
-	if ok && !Authorized(&existingData, newData.owner) {
+	if ok && !Authorized(&existingData, user) {
 		log4g.Info.Printf("Cannot update %s because owners do not match", key)
 		return ErrValueUpdateForbidden
-	} else {
+	}
+	if ok {
+		// Update existing data with writes, value, and age,
+		existingData.writes++
+		existingData.value = value
 		existingData.SetToCurrentTime()
+		ds.kvStore[key] = existingData
+	} else {
+		// Create new data, lastUsed time automatically set
+		newData := NewData(user, value)
+		newData.writes = 1
 		ds.EvictLru()
 		ds.kvStore[key] = newData
 	}
 	return nil
 }
 
-func (ds *Datasource) Contains(key Key) (bool, error) {
-	if ds.isClosed() {
-		log4g.Error.Printf("Cannot check if %s exists because key value store is nil", key)
-		return false, ErrKvStoreDoesNotExist
-	}
-	ds.RLock()
-	defer ds.RUnlock()
-	_, ok := ds.kvStore[key]
-	return ok, nil
-}
+//func (ds *Datasource) Contains(key Key) (bool, error) {
+//	if ds.isClosed() {
+//		log4g.Error.Printf("Cannot check if %s exists because key value store is nil", key)
+//		return false, ErrKvStoreDoesNotExist
+//	}
+//	ds.RLock()
+//	defer ds.RUnlock()
+//	_, ok := ds.kvStore[key]
+//	return ok, nil
+//}
 
 func (ds *Datasource) Get(key Key) (*Data, error) {
 	if ds.isClosed() {
@@ -152,6 +161,8 @@ func (ds *Datasource) Get(key Key) (*Data, error) {
 	if !ok {
 		return nil, ErrKeyNotFound
 	}
+	// Update existing data with writes, value, and age,
+	existingData.reads++
 	existingData.SetToCurrentTime()
 	ds.kvStore[key] = existingData
 	return &existingData, nil
@@ -181,8 +192,8 @@ func (ds *Datasource) Delete(key Key, user string) error {
 // GetAllEntries Generate and return all datasource entries
 func (ds *Datasource) GetAllEntries() []Entry {
 	//TODO May need to optimize for larger key store sets i.e. fan in fan out retrieval
-	ds.Lock()
-	defer ds.Unlock()
+	ds.RLock()
+	defer ds.RUnlock()
 	entries := make([]Entry, ds.Size())
 	i := 0
 	for key, data := range ds.kvStore {

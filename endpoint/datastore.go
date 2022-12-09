@@ -72,7 +72,7 @@ func Datastore(ds *Datasource) http.HandlerFunc {
 				log4g.Info.Printf("request body value found, setting for key %s", key)
 			}
 
-			putErr := ds.Put(Key(key), NewData(user, newValue))
+			putErr := ds.Put(Key(key), user, newValue)
 			if putErr != nil {
 				log4g.Info.Printf("Unauthorized update to %s attempted by user: %s", key, user)
 				responseWriter.WriteHeader(http.StatusForbidden)
