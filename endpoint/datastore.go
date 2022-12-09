@@ -19,7 +19,8 @@ var (
 	contentTypeHeaderKey = "Content-Type"
 )
 
-func Store(ds *Datasource) http.HandlerFunc {
+// Datastore Allows users to create/read/update/delete key-value pairs in the datastore
+func Datastore(ds *Datasource) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
 		log4g.Request.Println(log4g.NewRequestLogEntry(request))
 
@@ -31,6 +32,9 @@ func Store(ds *Datasource) http.HandlerFunc {
 
 		responseWriter.Header().Set(contentTypeHeaderKey, textContentType)
 
+		//TODO this handler assumes that an empty string is a perfectly valid key, if not
+		// we would add some conditional logic here to check if it's an empty string, and
+		// return a 400 BAD REQUEST ERROR regardless of which Method was used with /datastore/
 		key := strings.TrimPrefix(request.URL.Path, DatastoreEndpoint)
 
 		switch request.Method {
@@ -63,7 +67,9 @@ func Store(ds *Datasource) http.HandlerFunc {
 			bytes, err := io.ReadAll(request.Body)
 			defer request.Body.Close()
 			newValue := string(bytes)
-			// TODO Not sure how to handle scenario where user does not provide a value
+			//TODO this handler assumes that an empty string is a perfectly valid value, if not
+			// we would add some conditional logic here to check if it's an empty string, and
+			// return a 400 BAD REQUEST ERROR
 			if err != nil || len(bytes) == 0 {
 				log4g.Warning.Println("request body empty, setting value")
 			} else {
