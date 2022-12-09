@@ -26,6 +26,7 @@ func Datastore(ds *Datasource) http.HandlerFunc {
 
 		user := server.AuthorizeUser(responseWriter, request)
 		if user == "" {
+			//Responses handled during Authorization
 			log4g.Info.Printf("Unable to process datastore request: Failed Authorization")
 			return
 		}

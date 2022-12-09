@@ -21,6 +21,7 @@ func List(datasource *Datasource) http.HandlerFunc {
 
 		user := server.AuthorizeUser(responseWriter, request)
 		if user == "" {
+			//Responses handled during Authorization
 			log4g.Info.Println("Unable to process list request: Failed Authorization")
 			return
 		}
