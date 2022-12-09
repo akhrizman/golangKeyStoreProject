@@ -2,7 +2,6 @@ package datasource
 
 import (
 	"errors"
-	"fmt"
 	"httpstore/log4g"
 	"sync"
 )
@@ -33,8 +32,7 @@ func NewDatasource(depth int) Datasource {
 func (ds *Datasource) Evict() {
 	// May not be thread safe, what if a key is deleted between Put() and Evict()
 	if ds.Size() >= ds.depth {
-		fmt.Println("Eviction Process Initiated")
-
+		return
 	}
 }
 
