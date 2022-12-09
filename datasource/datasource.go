@@ -2,9 +2,9 @@ package datasource
 
 import (
 	"errors"
-	"fmt"
 	"httpstore/log4g"
 	"sync"
+	"time"
 )
 
 // Errors
@@ -30,24 +30,28 @@ func NewDatasource(depth int) Datasource {
 	return Datasource{kvStore, depth, &mutex}
 }
 
-func (ds *Datasource) Evict() {
-	// May not be thread safe, what if a key is deleted between Put() and Evict()
-	if ds.Size() >= ds.depth {
-		fmt.Println("Eviction Process Initiated")
-		// search for least recently used key and delete it
-		lruData := NewData("user", "value")
-		var lruKey Key
-		for key, data := range ds.kvStore {
-			if lruKey == "" {
-				lruData = data
-				lruKey = key
-			} else {
-				if data.lastUsed.Before(lruData.lastUsed) {
-					lruKey = key
-				}
-			}
+func (ds *Datasource) EvictLru() {
+	if ds.Size() == ds.depth {
+		delete(ds.kvStore, ds.getLruKey())
+	}
+}
+
+func (ds *Datasource) getLruKey() Key {
+	// logic to find LRU here
+	lruKey := Key("")
+	var lruDate time.Time
+	previousKeySet := false
+	for key, data := range ds.kvStore {
+		if !previousKeySet {
+			lruKey = key
+			lruDate = data.lastUsed
+			previousKeySet = true
+		} else if data.lastUsed.Before(lruDate) {
+			lruKey = key
+			lruDate = data.lastUsed
 		}
 	}
+	return lruKey
 }
 
 func (ds *Datasource) SetDepth(depth int) {
@@ -118,7 +122,7 @@ func (ds *Datasource) Put(key Key, newData Data) error {
 		return ErrValueUpdateForbidden
 	} else {
 		existingData.SetToCurrentTime()
-		ds.Evict()
+		ds.EvictLru()
 		ds.kvStore[key] = newData
 	}
 	return nil
