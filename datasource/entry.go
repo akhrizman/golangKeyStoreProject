@@ -1,5 +1,6 @@
 package datasource
 
+// Entry contains detailed information for every key-value pair in datastore
 type Entry struct {
 	Key    string `json:"key"`
 	Owner  string `json:"owner"`

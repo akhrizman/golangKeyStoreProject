@@ -111,6 +111,7 @@ func (ds *Datasource) CreateKvStore() error {
 	return nil
 }
 
+// Put Create or Update key-value pair and set it's lastUsed date to now.
 func (ds *Datasource) Put(key Key, user string, value string) error {
 	if ds.isClosed() {
 		log4g.Error.Printf("Cannot insert %s because key value store is nil", key)
@@ -132,24 +133,13 @@ func (ds *Datasource) Put(key Key, user string, value string) error {
 	} else {
 		// Create new data, lastUsed time automatically set
 		newData := NewData(user, value)
-		newData.writes = 1
 		ds.EvictLru()
 		ds.kvStore[key] = newData
 	}
 	return nil
 }
 
-//func (ds *Datasource) Contains(key Key) (bool, error) {
-//	if ds.isClosed() {
-//		log4g.Error.Printf("Cannot check if %s exists because key value store is nil", key)
-//		return false, ErrKvStoreDoesNotExist
-//	}
-//	ds.RLock()
-//	defer ds.RUnlock()
-//	_, ok := ds.kvStore[key]
-//	return ok, nil
-//}
-
+// Get Retrieve key-value pair and update it's lastUsed date to now.
 func (ds *Datasource) Get(key Key) (*Data, error) {
 	if ds.isClosed() {
 		log4g.Error.Printf("Cannot get %s because key value store is nil", key)
@@ -161,13 +151,13 @@ func (ds *Datasource) Get(key Key) (*Data, error) {
 	if !ok {
 		return nil, ErrKeyNotFound
 	}
-	// Update existing data with writes, value, and age,
 	existingData.reads++
 	existingData.SetToCurrentTime()
 	ds.kvStore[key] = existingData
 	return &existingData, nil
 }
 
+// Delete Remove key-value pair if authorized to do so.
 func (ds *Datasource) Delete(key Key, user string) error {
 	if ds.isClosed() {
 		log4g.Error.Printf("Cannot delete %s because key value store is nil", key)
@@ -191,7 +181,6 @@ func (ds *Datasource) Delete(key Key, user string) error {
 
 // GetAllEntries Generate and return all datasource entries
 func (ds *Datasource) GetAllEntries() []Entry {
-	//TODO May need to optimize for larger key store sets i.e. fan in fan out retrieval
 	ds.RLock()
 	defer ds.RUnlock()
 	entries := make([]Entry, ds.Size())
