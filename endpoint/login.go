@@ -17,14 +17,13 @@ func Login(responseWriter http.ResponseWriter, request *http.Request) {
 	username := server.Authenticate(request)
 	if username == "" {
 		responseWriter.WriteHeader(http.StatusUnauthorized)
-		return
 	} else {
 		bearerToken := server.GenerateBearerToken(username)
 		if bearerToken == "" {
 			responseWriter.WriteHeader(http.StatusInternalServerError)
-			return
+		} else {
+			responseWriter.Header().Set(server.AuthorizationHeaderKey, fmt.Sprintf("Bearer %s", bearerToken))
+			log4g.Info.Printf("Authenticated User %s", username)
 		}
-		responseWriter.Header().Set("Authorization", fmt.Sprintf("Bearer %s", bearerToken))
-		log4g.Info.Printf("Authenticated User %s", username)
 	}
 }
