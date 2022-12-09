@@ -34,7 +34,19 @@ func (ds *Datasource) Evict() {
 	// May not be thread safe, what if a key is deleted between Put() and Evict()
 	if ds.Size() >= ds.depth {
 		fmt.Println("Eviction Process Initiated")
-
+		// search for least recently used key and delete it
+		lruData := NewData("user", "value")
+		var lruKey Key
+		for key, data := range ds.kvStore {
+			if lruKey == "" {
+				lruData = data
+				lruKey = key
+			} else {
+				if data.lastUsed.Before(lruData.lastUsed) {
+					lruKey = key
+				}
+			}
+		}
 	}
 }
 
@@ -106,8 +118,8 @@ func (ds *Datasource) Put(key Key, newData Data) error {
 		return ErrValueUpdateForbidden
 	} else {
 		existingData.SetToCurrentTime()
-		ds.kvStore[key] = newData
 		ds.Evict()
+		ds.kvStore[key] = newData
 	}
 	return nil
 }
