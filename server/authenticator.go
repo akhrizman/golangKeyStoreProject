@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-var AuthorizationHeaderKey = "Authorization"
+const AuthorizationHeaderKey = "Authorization"
 
 var users = map[string]string{
 	"user_a": "$2a$08$GLVOud3QynSlvqon6qZOTeGLI37RimXVrBChQ1cn3qZWyQBI414ty",

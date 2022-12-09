@@ -10,13 +10,8 @@ import (
 	"strings"
 )
 
-var (
-	DatastoreEndpoint    = "/datastore/"
-	textContentType      = "text/plain; charset=utf-8"
-	forbiddenRespText    = "Forbidden"
-	keyNotFoundRespText  = "404 key not found"
-	okResponseText       = "OK"
-	contentTypeHeaderKey = "Content-Type"
+const (
+	DatastoreEndpoint = "/datastore/"
 )
 
 // Datastore Allows users to create/read/update/delete key-value pairs in the datastore
@@ -31,7 +26,7 @@ func Datastore(ds *Datasource) http.HandlerFunc {
 			return
 		}
 
-		responseWriter.Header().Set(contentTypeHeaderKey, textContentType)
+		responseWriter.Header().Set(ContentTypeHeaderKey, TextContentType)
 
 		//TODO this handler assumes that an empty string is a perfectly valid key, if not
 		// we would add some conditional logic here to check if it's an empty string, and
@@ -43,7 +38,7 @@ func Datastore(ds *Datasource) http.HandlerFunc {
 			data, getErr := ds.Get(Key(key))
 			if getErr != nil {
 				responseWriter.WriteHeader(http.StatusNotFound)
-				_, writeErr := responseWriter.Write([]byte(keyNotFoundRespText))
+				_, writeErr := responseWriter.Write([]byte(KeyNotFoundRespText))
 				if writeErr != nil {
 					responseWriter.WriteHeader(http.StatusInternalServerError)
 				}
@@ -56,10 +51,10 @@ func Datastore(ds *Datasource) http.HandlerFunc {
 			}
 
 		case http.MethodPut:
-			contentHeader := request.Header.Get(contentTypeHeaderKey)
+			contentHeader := request.Header.Get(ContentTypeHeaderKey)
 			if contentHeader != "" {
-				if contentHeader != textContentType {
-					log4g.Error.Printf("%s header is not %s", contentTypeHeaderKey, textContentType)
+				if contentHeader != TextContentType {
+					log4g.Error.Printf("%s header is not %s", ContentTypeHeaderKey, TextContentType)
 					responseWriter.WriteHeader(http.StatusUnsupportedMediaType)
 					return
 				}
@@ -81,13 +76,13 @@ func Datastore(ds *Datasource) http.HandlerFunc {
 			if putErr != nil {
 				log4g.Info.Printf("Unauthorized update to %s attempted by user: %s", key, user)
 				responseWriter.WriteHeader(http.StatusForbidden)
-				_, writeErr := responseWriter.Write([]byte(forbiddenRespText))
+				_, writeErr := responseWriter.Write([]byte(ForbiddenRespText))
 				if writeErr != nil {
 					responseWriter.WriteHeader(http.StatusInternalServerError)
 				}
 			} else {
 				responseWriter.WriteHeader(http.StatusOK)
-				_, writeErr := responseWriter.Write([]byte(okResponseText))
+				_, writeErr := responseWriter.Write([]byte(OkResponseText))
 				if writeErr != nil {
 					responseWriter.WriteHeader(http.StatusInternalServerError)
 				}
@@ -99,21 +94,21 @@ func Datastore(ds *Datasource) http.HandlerFunc {
 			switch {
 			case errors.Is(delErr, ErrKeyNotFound):
 				responseWriter.WriteHeader(http.StatusNotFound)
-				_, writeErr := responseWriter.Write([]byte(keyNotFoundRespText))
+				_, writeErr := responseWriter.Write([]byte(KeyNotFoundRespText))
 				if writeErr != nil {
 					responseWriter.WriteHeader(http.StatusInternalServerError)
 				}
 			case errors.Is(delErr, ErrValueDeleteForbidden):
 				log4g.Info.Printf("Unauthorized deletion of %s attempted by user: %s", key, user)
 				responseWriter.WriteHeader(http.StatusForbidden)
-				_, writeErr := responseWriter.Write([]byte(forbiddenRespText))
+				_, writeErr := responseWriter.Write([]byte(ForbiddenRespText))
 				if writeErr != nil {
 					responseWriter.WriteHeader(http.StatusInternalServerError)
 				}
 			default:
 				log4g.Info.Printf("%s deleted successfully", key)
 				responseWriter.WriteHeader(http.StatusOK)
-				_, writeErr := responseWriter.Write([]byte(okResponseText))
+				_, writeErr := responseWriter.Write([]byte(OkResponseText))
 				if writeErr != nil {
 					responseWriter.WriteHeader(http.StatusInternalServerError)
 				}

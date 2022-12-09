@@ -10,7 +10,7 @@ import (
 	"strconv"
 )
 
-var (
+const (
 	validPortRangeMin = 1024
 	validPortRangeMax = 65535
 	host              = "localhost"

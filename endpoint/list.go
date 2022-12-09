@@ -9,10 +9,7 @@ import (
 	"strings"
 )
 
-var (
-	ListEndpoint    = "/list/"
-	jsonContentType = "application/json; charset=utf-8"
-)
+const ListEndpoint = "/list/"
 
 // List Handler to return detailed information about key-value pairs in the datastore
 func List(datasource *Datasource) http.HandlerFunc {
@@ -26,7 +23,7 @@ func List(datasource *Datasource) http.HandlerFunc {
 			return
 		}
 
-		responseWriter.Header().Set(contentTypeHeaderKey, jsonContentType)
+		responseWriter.Header().Set(ContentTypeHeaderKey, JsonContentType)
 
 		key := strings.TrimPrefix(request.URL.Path, ListEndpoint)
 
@@ -48,7 +45,7 @@ func List(datasource *Datasource) http.HandlerFunc {
 				entry, errGetOne := datasource.GetEntry(Key(key))
 				if errGetOne != nil {
 					responseWriter.WriteHeader(http.StatusNotFound)
-					_, writeErr := responseWriter.Write([]byte(keyNotFoundRespText))
+					_, writeErr := responseWriter.Write([]byte(KeyNotFoundRespText))
 					if writeErr != nil {
 						responseWriter.WriteHeader(http.StatusInternalServerError)
 					}

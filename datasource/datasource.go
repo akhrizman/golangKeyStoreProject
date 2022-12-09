@@ -2,6 +2,7 @@ package datasource
 
 import (
 	"errors"
+	"fmt"
 	"httpstore/log4g"
 	"sync"
 )
@@ -18,14 +19,27 @@ var (
 // Datasource and corresponding methods
 type Datasource struct {
 	kvStore map[Key]Data
+	depth   int
 	mutex   *sync.RWMutex
 }
 
-func NewDatasource() Datasource {
+func NewDatasource(depth int) Datasource {
 	log4g.Info.Println("Created New Datasource with keystore")
 	kvStore := make(map[Key]Data)
 	mutex := sync.RWMutex{}
-	return Datasource{kvStore, &mutex}
+	return Datasource{kvStore, depth, &mutex}
+}
+
+func (ds *Datasource) Evict() {
+	// May not be thread safe, what if a key is deleted between Put() and Evict()
+	if ds.Size() >= ds.depth {
+		fmt.Println("Eviction Process Initiated")
+
+	}
+}
+
+func (ds *Datasource) SetDepth(depth int) {
+	ds.depth = depth
 }
 
 func (ds *Datasource) isOpen() bool {
@@ -91,7 +105,9 @@ func (ds *Datasource) Put(key Key, newData Data) error {
 		log4g.Info.Printf("Cannot update %s because owners do not match", key)
 		return ErrValueUpdateForbidden
 	} else {
+		existingData.SetToCurrentTime()
 		ds.kvStore[key] = newData
+		ds.Evict()
 	}
 	return nil
 }
@@ -112,12 +128,14 @@ func (ds *Datasource) Get(key Key) (*Data, error) {
 		log4g.Error.Printf("Cannot get %s because key value store is nil", key)
 		return nil, ErrKvStoreDoesNotExist
 	}
-	ds.RLock()
-	defer ds.RUnlock()
+	ds.Lock()
+	defer ds.Unlock()
 	existingData, ok := ds.kvStore[key]
 	if !ok {
 		return nil, ErrKeyNotFound
 	}
+	existingData.SetToCurrentTime()
+	ds.kvStore[key] = existingData
 	return &existingData, nil
 }
 

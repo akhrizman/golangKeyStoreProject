@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-var ShutdownEndpoint = "/shutdown"
+const ShutdownEndpoint = "/shutdown"
 
 // Shutdown Handler to gracefully down the http server.
 func Shutdown(responseWriter http.ResponseWriter, request *http.Request) {
@@ -22,19 +22,19 @@ func Shutdown(responseWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	responseWriter.Header().Set(contentTypeHeaderKey, textContentType)
+	responseWriter.Header().Set(ContentTypeHeaderKey, TextContentType)
 
 	// Only admins can shut down the server via this endpoint
 	if user != "admin" {
 		log4g.Warning.Printf("Unauthorized shutdown attempted by user: %s", user)
 		responseWriter.WriteHeader(http.StatusForbidden)
-		_, writeErr := responseWriter.Write([]byte(forbiddenRespText))
+		_, writeErr := responseWriter.Write([]byte(ForbiddenRespText))
 		if writeErr != nil {
 			responseWriter.WriteHeader(http.StatusInternalServerError)
 		}
 	} else {
 		responseWriter.WriteHeader(http.StatusOK)
-		_, writeErr := responseWriter.Write([]byte(okResponseText))
+		_, writeErr := responseWriter.Write([]byte(OkResponseText))
 		if writeErr != nil {
 			responseWriter.WriteHeader(http.StatusInternalServerError)
 		}

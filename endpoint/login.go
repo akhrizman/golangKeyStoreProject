@@ -7,11 +7,11 @@ import (
 	"net/http"
 )
 
-var LoginEndpoint = "/login"
+const LoginEndpoint = "/login"
 
 func Login(responseWriter http.ResponseWriter, request *http.Request) {
 	log4g.Request.Println(log4g.NewRequestLogEntry(request))
-	responseWriter.Header().Set(contentTypeHeaderKey, textContentType)
+	responseWriter.Header().Set(ContentTypeHeaderKey, TextContentType)
 
 	username := server.Authenticate(request)
 	if username == "" {

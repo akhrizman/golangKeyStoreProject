@@ -18,7 +18,7 @@ func main() {
 	port = server.ValidatePort()
 
 	log4g.Info.Println("STARTING HTTP DATASTORE")
-	var datasource = datasource.NewDatasource()
+	var datasource = datasource.NewDatasource(10)
 
 	log4g.Info.Println("Setting Up Route Handlers")
 	http.HandleFunc(PingEndpoint, Ping)

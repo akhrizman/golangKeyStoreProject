@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-var (
+const (
 	logsDir        = "C:/Users/Alex.Khrizman/go_logs/"
 	storeLogName   = "datasource.log"
 	requestLogName = "htaccess.log"

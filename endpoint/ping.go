@@ -11,7 +11,7 @@ var PingEndpoint = "/ping"
 func Ping(responseWriter http.ResponseWriter, request *http.Request) {
 	log4g.Request.Println(log4g.NewRequestLogEntry(request))
 	responseWriter.WriteHeader(http.StatusOK)
-	responseWriter.Header().Set(contentTypeHeaderKey, textContentType)
+	responseWriter.Header().Set(ContentTypeHeaderKey, TextContentType)
 	_, writeErr := responseWriter.Write([]byte("pong"))
 	if writeErr != nil {
 		responseWriter.WriteHeader(http.StatusInternalServerError)
