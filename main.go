@@ -10,15 +10,16 @@ import (
 )
 
 var port int
+var depth int
 
 func main() {
 	log4g.SetupLogFiles()
 	defer log4g.CloseLogFiles()
 
-	port = server.ValidatePort()
+	port, depth = server.ValidateFlags()
 
 	log4g.Info.Println("STARTING HTTP DATASTORE")
-	var datasource = datasource.NewDatasource(10)
+	var datasource = datasource.NewDatasource(depth)
 
 	log4g.Info.Println("Setting Up Route Handlers")
 	http.HandleFunc(PingEndpoint, Ping)

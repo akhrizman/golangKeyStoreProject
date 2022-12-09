@@ -4,6 +4,7 @@ import (
 	"errors"
 	"httpstore/log4g"
 	"sync"
+	"time"
 )
 
 // Errors
@@ -29,11 +30,30 @@ func NewDatasource(depth int) Datasource {
 	return Datasource{kvStore, depth, &mutex}
 }
 
-func (ds *Datasource) Evict() {
-	// May not be thread safe, what if a key is deleted between Put() and Evict()
-	if ds.Size() >= ds.depth {
-		return
+// EvictLru Deletes the Least Recently Used (LRU) key if keystore size is at depth
+func (ds *Datasource) EvictLru() {
+	if ds.Size() == ds.depth {
+		delete(ds.kvStore, ds.getLruKey())
 	}
+}
+
+// getLruKey Retrieves the key with the oldest timestamp from the keystore
+func (ds *Datasource) getLruKey() Key {
+	var lruKey Key
+	var lruDate time.Time
+	isFirstKeyChecked := true
+	for key, data := range ds.kvStore {
+		// Basic logic: Compare each key to the previous key.  First key checked is set automatically
+		if isFirstKeyChecked {
+			lruKey = key
+			lruDate = data.lastUsed
+			isFirstKeyChecked = false
+		} else if data.lastUsed.Before(lruDate) {
+			lruKey = key
+			lruDate = data.lastUsed
+		}
+	}
+	return lruKey
 }
 
 func (ds *Datasource) SetDepth(depth int) {
@@ -104,8 +124,8 @@ func (ds *Datasource) Put(key Key, newData Data) error {
 		return ErrValueUpdateForbidden
 	} else {
 		existingData.SetToCurrentTime()
+		ds.EvictLru()
 		ds.kvStore[key] = newData
-		ds.Evict()
 	}
 	return nil
 }
