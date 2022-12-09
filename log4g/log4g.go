@@ -34,18 +34,18 @@ func CloseLogFiles() {
 	ServerLogFile.Close()
 }
 
+// RequestLogEntry Stores relevant request information for use in logging as json
 type RequestLogEntry struct {
 	SourceIP   string    `json:"source IP"`
-	HttpMethod string    `json:"HTTP method"`
+	HttpMethod string    `json:"HTTP Method"`
 	Url        string    `json:"URL"`
-	Time       time.Time `json:"time of request"`
+	Time       time.Time `json:"Time Of Request"`
 }
 
 func (entry RequestLogEntry) String() string {
 	reqDetails, _ := json.Marshal(entry)
 	return string(reqDetails)
 }
-
 func NewRequestLogEntry(request *http.Request) RequestLogEntry {
 	return RequestLogEntry{
 		SourceIP:   request.RemoteAddr,
@@ -54,23 +54,21 @@ func NewRequestLogEntry(request *http.Request) RequestLogEntry {
 		Time:       time.Now()}
 }
 
-// SetupRequestLog Create and setup request log
+// SetupRequestLog Creates and sets up request log
 func SetupRequestLog() {
 	requestLogFile, fileErr := os.OpenFile(fmt.Sprintf("%s%s", logsDir, requestLogName), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if fileErr != nil {
 		Request.Fatal(fileErr)
 	}
-
 	Request = log.New(requestLogFile, "", log.Ldate|log.Ltime)
 }
 
-// SetupServerLog Create and setup server log
+// SetupServerLog Creates and sets up server log
 func SetupServerLog() {
 	serverLogFile, fileErr := os.OpenFile(fmt.Sprintf("%s%s", logsDir, storeLogName), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if fileErr != nil {
 		Error.Fatal(fileErr)
 	}
-
 	Info = log.New(serverLogFile, "INFO:", log.Ldate|log.Ltime|log.Lshortfile)
 	Warning = log.New(serverLogFile, "WARNING:", log.Ldate|log.Ltime|log.Lshortfile)
 	Error = log.New(serverLogFile, "ERROR:", log.Ldate|log.Ltime|log.Lshortfile)

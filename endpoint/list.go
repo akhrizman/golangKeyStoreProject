@@ -14,13 +14,14 @@ var (
 	jsonContentType = "application/json; charset=utf-8"
 )
 
+// List Handler to return detailed information about key-value pairs in the datastore
 func List(datasource *Datasource) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
 		log4g.Request.Println(log4g.NewRequestLogEntry(request))
 
-		user := server.AuthorizedUser(responseWriter, request)
+		user := server.AuthorizeUser(responseWriter, request)
 		if user == "" {
-			log4g.Info.Printf("Unable to process request: Failed Authorization", request.Method)
+			log4g.Info.Println("Unable to process list request: Failed Authorization")
 			return
 		}
 
@@ -46,7 +47,10 @@ func List(datasource *Datasource) http.HandlerFunc {
 				entry, errGetOne := datasource.GetEntry(Key(key))
 				if errGetOne != nil {
 					responseWriter.WriteHeader(http.StatusNotFound)
-					responseWriter.Write([]byte(keyNotFoundRespText))
+					_, writeErr := responseWriter.Write([]byte(keyNotFoundRespText))
+					if writeErr != nil {
+						responseWriter.WriteHeader(http.StatusInternalServerError)
+					}
 				} else {
 					entryJson, errJson := json.Marshal(entry)
 					if errJson != nil {

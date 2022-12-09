@@ -26,8 +26,8 @@ type Claims struct {
 
 var jwtKey = []byte("bird_person") // USE REAL KEY IN PRODUCTION!!!
 
-// AuthorizedUser Return user provided by bearer token if request is authenticated
-func AuthorizedUser(responseWriter http.ResponseWriter, request *http.Request) string {
+// AuthorizeUser Return user provided by bearer token if request is authenticated
+func AuthorizeUser(responseWriter http.ResponseWriter, request *http.Request) string {
 	auth := request.Header.Get(AuthorizationHeaderKey)
 	if auth == "" {
 		responseWriter.WriteHeader(http.StatusUnauthorized)
@@ -42,16 +42,16 @@ func AuthorizedUser(responseWriter http.ResponseWriter, request *http.Request) s
 	})
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid {
-			fmt.Printf("Error signature invalid %v\n", err)
+			log4g.Info.Printf("Error signature invalid %v\n", err)
 			responseWriter.WriteHeader(http.StatusUnauthorized)
 			return ""
 		}
-		fmt.Printf("Error processing JWT token %v\n", err)
+		log4g.Error.Printf("Error processing JWT token %v\n", err)
 		responseWriter.WriteHeader(http.StatusBadRequest)
 		return ""
 	}
 	if !token.Valid {
-		fmt.Printf("Error invalid token %v\n", err)
+		log4g.Error.Printf("Error invalid token %v\n", err)
 		responseWriter.WriteHeader(http.StatusUnauthorized)
 		return ""
 	}
@@ -102,6 +102,7 @@ func GenerateBearerToken(username string) string {
 	return tokenString
 }
 
+// PasswordValidated Confirm a password matches its hash
 func PasswordValidated(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil

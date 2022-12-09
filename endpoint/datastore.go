@@ -23,9 +23,9 @@ func Store(ds *Datasource) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
 		log4g.Request.Println(log4g.NewRequestLogEntry(request))
 
-		user := server.AuthorizedUser(responseWriter, request)
+		user := server.AuthorizeUser(responseWriter, request)
 		if user == "" {
-			log4g.Info.Printf("Unable to process request: Failed Authorization", request.Method)
+			log4g.Info.Printf("Unable to process datastore request: Failed Authorization")
 			return
 		}
 
@@ -37,10 +37,16 @@ func Store(ds *Datasource) http.HandlerFunc {
 			data, getErr := ds.Get(Key(key))
 			if getErr != nil {
 				responseWriter.WriteHeader(http.StatusNotFound)
-				responseWriter.Write([]byte(keyNotFoundRespText))
+				_, writeErr := responseWriter.Write([]byte(keyNotFoundRespText))
+				if writeErr != nil {
+					responseWriter.WriteHeader(http.StatusInternalServerError)
+				}
 			} else {
 				responseWriter.WriteHeader(http.StatusOK)
-				responseWriter.Write([]byte(data.GetValue()))
+				_, writeErr := responseWriter.Write([]byte(data.GetValue()))
+				if writeErr != nil {
+					responseWriter.WriteHeader(http.StatusInternalServerError)
+				}
 			}
 
 		case http.MethodPut:
@@ -70,10 +76,16 @@ func Store(ds *Datasource) http.HandlerFunc {
 			if putErr != nil {
 				log4g.Info.Printf("Unauthorized update to %s attempted by user: %s", key, user)
 				responseWriter.WriteHeader(http.StatusForbidden)
-				responseWriter.Write([]byte(forbiddenRespText))
+				_, writeErr := responseWriter.Write([]byte(forbiddenRespText))
+				if writeErr != nil {
+					responseWriter.WriteHeader(http.StatusInternalServerError)
+				}
 			} else {
 				responseWriter.WriteHeader(http.StatusOK)
-				responseWriter.Write([]byte(okResponseText))
+				_, writeErr := responseWriter.Write([]byte(okResponseText))
+				if writeErr != nil {
+					responseWriter.WriteHeader(http.StatusInternalServerError)
+				}
 			}
 
 		case http.MethodDelete:
@@ -83,15 +95,24 @@ func Store(ds *Datasource) http.HandlerFunc {
 			switch {
 			case errors.Is(delErr, ErrKeyNotFound):
 				responseWriter.WriteHeader(http.StatusNotFound)
-				responseWriter.Write([]byte(keyNotFoundRespText))
+				_, writeErr := responseWriter.Write([]byte(keyNotFoundRespText))
+				if writeErr != nil {
+					responseWriter.WriteHeader(http.StatusInternalServerError)
+				}
 			case errors.Is(delErr, ErrValueDeleteForbidden):
 				log4g.Info.Printf("Unauthorized deletion of %s attempted by user: %s", key, user)
 				responseWriter.WriteHeader(http.StatusForbidden)
-				responseWriter.Write([]byte(forbiddenRespText))
+				_, writeErr := responseWriter.Write([]byte(forbiddenRespText))
+				if writeErr != nil {
+					responseWriter.WriteHeader(http.StatusInternalServerError)
+				}
 			default:
 				log4g.Info.Printf("%s deleted successfully", key)
 				responseWriter.WriteHeader(http.StatusOK)
-				responseWriter.Write([]byte(okResponseText))
+				_, writeErr := responseWriter.Write([]byte(okResponseText))
+				if writeErr != nil {
+					responseWriter.WriteHeader(http.StatusInternalServerError)
+				}
 			}
 
 		default:

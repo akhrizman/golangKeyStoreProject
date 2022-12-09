@@ -29,7 +29,7 @@ func main() {
 
 	apiHost := server.ApiHost(port)
 	log4g.Info.Printf("Server available, see - http://%s", apiHost)
-	err := http.ListenAndServe(fmt.Sprintf(apiHost), nil)
+	err := http.ListenAndServe(fmt.Sprint(apiHost), nil)
 	if err != nil {
 		server.ExitOnErrors(port, err)
 	}

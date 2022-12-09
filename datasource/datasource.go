@@ -18,14 +18,14 @@ var (
 // Datasource and corresponding methods
 type Datasource struct {
 	kvStore map[Key]Data
-	mutex   sync.RWMutex
+	mutex   *sync.RWMutex
 }
 
 func NewDatasource() Datasource {
 	log4g.Info.Println("Created New Datasource with keystore")
 	kvStore := make(map[Key]Data)
 	mutex := sync.RWMutex{}
-	return Datasource{kvStore, mutex}
+	return Datasource{kvStore, &mutex}
 }
 
 func (ds *Datasource) isOpen() bool {

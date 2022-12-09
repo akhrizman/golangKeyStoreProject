@@ -9,10 +9,10 @@ func (key Key) String() string {
 	return fmt.Sprintf("Key(%s)", string(key))
 }
 
-// Data to contain owner and value
+// Data Contains the value of the key-value store plus any additional data.
 type Data struct {
-	owner string `json:"owner"`
-	value string `json:"value"`
+	owner string
+	value string
 }
 
 func NewData(user string, value string) Data {
