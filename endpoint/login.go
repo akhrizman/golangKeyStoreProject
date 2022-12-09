@@ -10,7 +10,6 @@ import (
 var LoginEndpoint = "/login"
 
 func Login(responseWriter http.ResponseWriter, request *http.Request) {
-	log4g.Info.Println("Processing login request")
 	log4g.Request.Println(log4g.NewRequestLogEntry(request))
 	responseWriter.Header().Set(contentTypeHeaderKey, textContentType)
 
