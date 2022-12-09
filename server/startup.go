@@ -16,16 +16,22 @@ const (
 	host              = "localhost"
 )
 
-// ValidatePort Set port globally if arg value is valid, otherwise exit
-func ValidatePort() int {
+// ValidateFlags Set port globally if arg value is valid, otherwise exit
+func ValidateFlags() (int, int) {
 	portArg := flag.String("port", "none", "server port")
+	depthArg := flag.String("depth", "10", "key store depth")
 	flag.Parse()
 
-	p, err := strconv.Atoi(*portArg)
-	if err != nil || p < validPortRangeMin || p > validPortRangeMax {
+	port, err := strconv.Atoi(*portArg)
+	if err != nil || port < validPortRangeMin || port > validPortRangeMax {
 		os.Exit(ExitStatus(-1))
 	}
-	return p
+
+	depth, err := strconv.Atoi(*depthArg)
+	if err != nil || depth < 0 {
+		os.Exit(ExitStatus(-1))
+	}
+	return port, depth
 }
 
 // ExitOnErrors Check for Port Binding and successful start of application, otherwise exit

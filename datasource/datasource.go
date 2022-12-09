@@ -30,22 +30,24 @@ func NewDatasource(depth int) Datasource {
 	return Datasource{kvStore, depth, &mutex}
 }
 
+// EvictLru Deletes the Least Recently Used (LRU) key if keystore size is at depth
 func (ds *Datasource) EvictLru() {
 	if ds.Size() == ds.depth {
 		delete(ds.kvStore, ds.getLruKey())
 	}
 }
 
+// getLruKey Retrieves the key with the oldest timestamp from the keystore
 func (ds *Datasource) getLruKey() Key {
-	// logic to find LRU here
 	lruKey := Key("")
 	var lruDate time.Time
-	previousKeySet := false
+	isFirstKeyChecked := true
 	for key, data := range ds.kvStore {
-		if !previousKeySet {
+		// Basic logic is: Compare each key to the previous key.  First key checked is set automatically
+		if isFirstKeyChecked {
 			lruKey = key
 			lruDate = data.lastUsed
-			previousKeySet = true
+			isFirstKeyChecked = false
 		} else if data.lastUsed.Before(lruDate) {
 			lruKey = key
 			lruDate = data.lastUsed
