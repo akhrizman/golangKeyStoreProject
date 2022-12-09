@@ -23,7 +23,6 @@ func ValidatePort() int {
 
 	p, err := strconv.Atoi(*portArg)
 	if err != nil || p < validPortRangeMin || p > validPortRangeMax {
-		//fmt.Println("Missing or Invalid Port")
 		os.Exit(ExitStatus(-1))
 	}
 	return p
@@ -33,11 +32,9 @@ func ValidatePort() int {
 func ExitOnErrors(port int, err error) {
 	switch t := err.(type) {
 	case *net.OpError:
-		fmt.Printf("Error Binding port %d - %s\n", port, t)
 		log4g.Error.Printf("Error Binding port %d - %s\n", port, t)
 		os.Exit(ExitStatus(-2))
 	default:
-		fmt.Println("Error Starting Server - ", err)
 		log4g.Error.Println("Error Starting Server - ", err)
 	}
 }
@@ -45,7 +42,6 @@ func ExitOnErrors(port int, err error) {
 // ExitStatus Make negative exit status codes positive for windows
 func ExitStatus(i int) int {
 	hostOS := runtime.GOOS
-	//fmt.Println("Detected OS:", hostOS)
 	if hostOS == "windows" && i < 0 {
 		i *= -1
 	}

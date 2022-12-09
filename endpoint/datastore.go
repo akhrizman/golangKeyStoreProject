@@ -31,9 +31,10 @@ func Store(ds *Datasource) http.HandlerFunc {
 
 		responseWriter.Header().Set(contentTypeHeaderKey, textContentType)
 
+		key := strings.TrimPrefix(request.URL.Path, DatastoreEndpoint)
+
 		switch request.Method {
 		case http.MethodGet:
-			key := strings.TrimPrefix(request.URL.Path, DatastoreEndpoint)
 			data, getErr := ds.Get(Key(key))
 			if getErr != nil {
 				responseWriter.WriteHeader(http.StatusNotFound)
@@ -59,12 +60,9 @@ func Store(ds *Datasource) http.HandlerFunc {
 				}
 			}
 
-			key := strings.TrimPrefix(request.URL.Path, DatastoreEndpoint)
-
 			bytes, err := io.ReadAll(request.Body)
 			defer request.Body.Close()
 			newValue := string(bytes)
-			//fmt.Println("request body received: ", newValue)
 			// TODO Not sure how to handle scenario where user does not provide a value
 			if err != nil || len(bytes) == 0 {
 				log4g.Warning.Println("request body empty, setting value")
@@ -89,7 +87,6 @@ func Store(ds *Datasource) http.HandlerFunc {
 			}
 
 		case http.MethodDelete:
-			key := strings.TrimPrefix(request.URL.Path, DatastoreEndpoint)
 			delErr := ds.Delete(Key(key), user)
 
 			switch {

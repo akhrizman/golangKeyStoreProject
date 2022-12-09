@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
 	"httpstore/log4g"
@@ -34,7 +33,6 @@ func AuthorizeUser(responseWriter http.ResponseWriter, request *http.Request) st
 		return ""
 	}
 	tokenString := strings.Replace(auth, "Bearer ", "", 1)
-	fmt.Println(tokenString)
 
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
@@ -98,7 +96,6 @@ func GenerateBearerToken(username string) string {
 		log4g.Error.Printf("Error creating the token: %v", err)
 		return ""
 	}
-	fmt.Printf("User: %s - %s", username, tokenString)
 	return tokenString
 }
 
